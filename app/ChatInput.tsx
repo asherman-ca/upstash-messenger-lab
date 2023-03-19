@@ -1,11 +1,17 @@
 'use client'
 import { FormEvent, useState } from 'react'
+import useSWR from 'swr'
 import { v4 as uuid } from 'uuid'
 import { Message } from '../typings'
+import fetcher from '../utils/fefchMessages'
 
 function ChatInput() {
 	const [input, setInput] = useState('')
-	const addMessage = (e: FormEvent<HTMLFormElement>) => {
+	const { data: messages, error, mutate } = useSWR('/api/getMessages', fetcher)
+
+	console.log('messages', messages)
+
+	const addMessage = async (e: FormEvent<HTMLFormElement>) => {
 		e.preventDefault()
 		if (!input) return
 		setInput('')
@@ -26,13 +32,15 @@ function ChatInput() {
 					'Content-Type': 'application/json',
 				},
 				body: JSON.stringify({ message }),
-			})
+			}).then((res) => res.json())
 
-			const data = await res.json()
-			console.log('MESSAGE ADDEDD', data)
+			return [res.message, ...messages!]
 		}
 
-		uploadMessageToUpstash()
+		// optimistic update using the bracket logic
+		await mutate(uploadMessageToUpstash, {
+			optimisticData: [message, ...messages!],
+		})
 	}
 
 	return (
