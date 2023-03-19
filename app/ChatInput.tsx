@@ -40,6 +40,7 @@ function ChatInput() {
 		// optimistic update using the bracket logic
 		await mutate(uploadMessageToUpstash, {
 			optimisticData: [message, ...messages!],
+			rollbackOnError: true,
 		})
 	}
 
