@@ -4,23 +4,28 @@ import useSWR from 'swr'
 import { v4 as uuid } from 'uuid'
 import { Message } from '../typings'
 import fetcher from '../utils/fefchMessages'
+import { getServerSession } from 'next-auth'
 
-function ChatInput() {
+type Props = {
+	session: Awaited<ReturnType<typeof getServerSession>>
+}
+
+function ChatInput({ session }: any) {
 	const [input, setInput] = useState('')
 	const { data: messages, error, mutate } = useSWR('/api/getMessages', fetcher)
 
 	const addMessage = async (e: FormEvent<HTMLFormElement>) => {
 		e.preventDefault()
-		if (!input) return
+		if (!input || !session) return
 		setInput('')
 		const id = uuid()
 		const message: Message = {
 			id,
 			message: input,
 			created_at: Date.now(),
-			username: 'Elon Musk',
-			profilePic: 'https://links.papareact.com/jne',
-			email: 'email@email.com',
+			username: session?.user?.name!,
+			profilePic: session?.user?.image!,
+			email: session?.user?.email,
 		}
 
 		const uploadMessageToUpstash = async () => {
@@ -42,12 +47,15 @@ function ChatInput() {
 		})
 	}
 
+	console.log('sesh', session)
+
 	return (
 		<form
 			className='fixed bottom-0 z-50 w-full flex px-10 py-5 space-x-2 border-t border-gray-100 bg-white'
 			onSubmit={addMessage}
 		>
 			<input
+				disabled={!session}
 				type='text'
 				value={input}
 				onChange={(e) => setInput(e.target.value)}
