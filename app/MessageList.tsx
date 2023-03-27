@@ -22,7 +22,7 @@ function MessageList({ initialMessages }: Props) {
 		const channel = clientPusher.subscribe('messages')
 
 		channel.bind('new-message', async (data: Message) => {
-			// check if the new message is from us to prevent duplicate
+			// check if the new message is from us (already exists in our message list in this case) to prevent duplicate
 			if (messages?.find((message) => message.id === data.id)) return
 
 			if (!messages) {
